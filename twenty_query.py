@@ -80,7 +80,12 @@ async def task():
     print(data.decode("utf-8"))
 
 async def opportunity():
-    payload = {
+    await note()
+
+
+    payload_target = "{\n  \"noteId\": \"11bee8fe-2793-4911-9b27-a6f8473a2ccf\",\n  \"opportunityId\": \"3d9795f2-7722-4e1d-b41e-0c5d0c24a902\",\n}"
+
+    payload_opportunity = {
         "position": 0,
         "name": f"Telegram: {telegram_voice.current_time}",
         "amount": {
@@ -100,14 +105,20 @@ async def opportunity():
     print(data.decode("utf-8"))
 
 
-# Use this to attach a note to a opportunity
-#import http.client
-#
-#conn = http.client.HTTPConnection("localhost:3000")
-#
-#conn.request("POST", "/rest/noteTargets", payload, headers)
-#
-#res = conn.getresponse()
-#data = res.read()
-#
-#print(data.decode("utf-8"))
+
+
+
+headers = {
+    'Content-Type': "application/json",
+    'Accept': "application/json",
+    'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZmU3NjFiOC02ZDMyLTRkYTQtYTBmNC1iZjlkNzYwMGZhOTkiLCJ0eXBlIjoiQVBJX0tFWSIsIndvcmtzcGFjZUlkIjoiMGZlNzYxYjgtNmQzMi00ZGE0LWEwZjQtYmY5ZDc2MDBmYTk5IiwiaWF0IjoxNzM3NzI2NTI2LCJleHAiOjQ4OTEzMjY1MjYsImp0aSI6Ijc5YTMwN2Y3LTBjMWYtNDYyMy05ZWFiLTZkNTQyYjM1YzQyZCJ9.aOp1Rqqk9aoJO8NqsElGbOhpYIeL1wIoQLb9VMvkAVY"
+}
+
+conn.request("POST", "/rest/noteTargets", payload, headers)
+
+res = conn.getresponse()
+data = res.read()
+
+print(data.decode("utf-8"))
+
+
