@@ -108,11 +108,7 @@ async def opportunity():
 
 
 
-headers = {
-    'Content-Type': "application/json",
-    'Accept': "application/json",
-    'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwZmU3NjFiOC02ZDMyLTRkYTQtYTBmNC1iZjlkNzYwMGZhOTkiLCJ0eXBlIjoiQVBJX0tFWSIsIndvcmtzcGFjZUlkIjoiMGZlNzYxYjgtNmQzMi00ZGE0LWEwZjQtYmY5ZDc2MDBmYTk5IiwiaWF0IjoxNzM3NzI2NTI2LCJleHAiOjQ4OTEzMjY1MjYsImp0aSI6Ijc5YTMwN2Y3LTBjMWYtNDYyMy05ZWFiLTZkNTQyYjM1YzQyZCJ9.aOp1Rqqk9aoJO8NqsElGbOhpYIeL1wIoQLb9VMvkAVY"
-}
+
 
 conn.request("POST", "/rest/noteTargets", payload, headers)
 
