@@ -48,7 +48,7 @@ async def note():
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram: {telegram_voice.current_time}",
+        "title": f"Telegram - {telegram_voice.current_time}",
         "body": body,
         "createdBy": {
             "source": "SYSTEM"
@@ -59,13 +59,18 @@ async def note():
     conn.request("POST", "/rest/notes", payload_json, headers)
     res = conn.getresponse()
     data = res.read()
-    print(data.decode("utf-8"))
+    response_data = data.decode("utf-8")
+    response_json = json.loads(response_data)  # Parse JSON
+    note_id = response_json["data"]["createNote"]["id"]
+    #print(f"Note created with ID: {note_id}")
+
+    return note_id
 
 async def task():
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram: {telegram_voice.current_time}",
+        "title": f"Telegram - {telegram_voice.current_time}",
         "body": body,
         "status": "TODO",
         "createdBy": {
@@ -77,21 +82,18 @@ async def task():
     conn.request("POST", "/rest/tasks", payload_json, headers)
     res = conn.getresponse()
     data = res.read()
-    print(data.decode("utf-8"))
+    response_data = data.decode("utf-8")
+    response_json = json.loads(response_data)  # Parse JSON
+    task_id = response_json["data"]["createTask"]["id"]
+    #print(f"Task created with ID: {task_id}")
+
+    return task_id
+
 
 async def opportunity():
-    await note()
-
-
-    payload_target = "{\n  \"noteId\": \"11bee8fe-2793-4911-9b27-a6f8473a2ccf\",\n  \"opportunityId\": \"3d9795f2-7722-4e1d-b41e-0c5d0c24a902\",\n}"
-
-    payload_opportunity = {
+    payload = {
         "position": 0,
-        "name": f"Telegram: {telegram_voice.current_time}",
-        "amount": {
-            "amountMicros": 0,
-            "currencyCode": "test",
-        },
+        "name": f"Telegram - {telegram_voice.current_time}",
         "stage": "NEW",
         "createdBy": {
             "source": "SYSTEM"
@@ -102,19 +104,26 @@ async def opportunity():
     conn.request("POST", "/rest/opportunities", payload_json, headers)
     res = conn.getresponse()
     data = res.read()
+    response_data = data.decode("utf-8")
+    response_json = json.loads(response_data)  # Parse JSON
+    opportunity_id = response_json["data"]["createOpportunity"]["id"]
+
+    return opportunity_id
+
+async def note_target():
+    opportunity_id = await opportunity()
+    note_id = await note()    
+
+    payload_data = {
+    "noteId": note_id,
+    "opportunityId": opportunity_id,
+    }
+
+    # Convert the dictionary to a JSON-formatted string
+    payload = json.dumps(payload_data)
+    conn = http.client.HTTPConnection(SITE)
+    conn.request("POST", "/rest/noteTargets", payload, headers)
+    res = conn.getresponse()
+    data = res.read()
     print(data.decode("utf-8"))
-
-
-
-
-
-
-
-conn.request("POST", "/rest/noteTargets", payload, headers)
-
-res = conn.getresponse()
-data = res.read()
-
-print(data.decode("utf-8"))
-
 

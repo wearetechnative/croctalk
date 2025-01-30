@@ -1,6 +1,6 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, Application, ContextTypes
+from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, Application, ContextTypes, CallbackContext
 import os
 import whisper
 from whisper.utils import get_writer
@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN') 
 
-SAVE_DIR_VOICE = "voice/"
-SAVE_DIR_TXT = "txt/"
+SAVE_DIR_VOICE = "/tmp/voice/"
+SAVE_DIR_TXT = "/tmp/txt/"
 
 # Whisper
 model_whisper = whisper.load_model('small')
@@ -21,16 +21,14 @@ def get_transcribe(audio: str, language: str = 'nl'):
     return model_whisper.transcribe(audio=audio, language=language, verbose=False)
 
 # Logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
 # Curent time in readable format
 current = datetime.now()
-current_time = current.strftime('%Y-%d-%m' ' at ' '%H:%M')
+current_time = current.strftime('%Y-%d-%m')
 
 
 
@@ -64,7 +62,7 @@ def delete_txt_files():
         logger.info(f"Deleted file: {file_path_voice}")
 
 # telegram-bot and Whisper
-async def download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def download_audio(update: Update, context: CallbackContext):
     audio = update.message.audio or update.message.voice
     txt = update.message.text
 
@@ -94,41 +92,60 @@ async def download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Buttons
 MENU, BUTTON1, BUTTON2, BUTTON3 = range(4)
 
-async def show_option_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def show_option_buttons(update: Update, context: CallbackContext) -> None:
+        
     keyboard = [
-        [InlineKeyboardButton("Cancel", callback_data='button_1')],
-        [InlineKeyboardButton("New Note", callback_data='button_2')],
-        [InlineKeyboardButton("New Task", callback_data='button_3')],
-        [InlineKeyboardButton("New Opportunity", callback_data='button_4')],
+        [InlineKeyboardButton("Cancel", callback_data="step_0-button_1")],
+        [InlineKeyboardButton("New Note", callback_data="step_1-button_1")],
+        [InlineKeyboardButton("New Task", callback_data="step_1-button_2")],
+        [InlineKeyboardButton("New Opportunity", callback_data="step_1-button_3")],
     ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('Welcome, please choose an option:', reply_markup=reply_markup)
 
     return MENU
 
-async def button_selection_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def button_selection_handler(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     await query.answer()
 
-    if query.data == "button_1":
-        await query.edit_message_text(text="Operation is cancelled")
-        delete_txt_files()
-        return BUTTON1
-    elif query.data == "button_2":
-        await query.edit_message_text(text="Making a new Note...")
+    data_dict = query.data.split("-") 
+    step = data_dict[0].split("_")[1]  # Extract step number
+    button = data_dict[1].split("_")[1]  # Extract button number
+
+    if step == "0":
+        if button == "1":
+            await query.edit_message_text(text="Operation is cancelled")
+            delete_txt_files()
+            return
+
+        
+    elif step == "1":
+        if button in ["1", "2", "3"]:
+            action_map = {"1": "note", "2": "task", "3": "opportunity"}
+            context.user_data["create_type"] = action_map[button]
+            await options(update, context)
+            await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
+            return 
+
+async def options(update: Update, context: CallbackContext):  
+    create_type = context.user_data["create_type"]
+    print(create_type)
+
+    if create_type == "note":
         await twenty_query.note()
         delete_txt_files()
-        return BUTTON2    
-    elif query.data == "button_3":
-        await query.edit_message_text(text="Making a new Task...")
+
+    if create_type == "task":
         await twenty_query.task()
         delete_txt_files()
-        return BUTTON3
-    elif query.data == "button_4":
-        await query.edit_message_text(text="Making a new Opportunity...")
-        await twenty_query.opportunity()
+
+    if create_type == "opportunity":
+        #await twenty_query.opportunity()
+        #await twenty_query.note()
+        await twenty_query.note_target()
         delete_txt_files()
-        return BUTTON3
 
 # python-telegram-bot
 def main() -> None:
@@ -138,14 +155,10 @@ def main() -> None:
     application = Application.builder().token(BOT_TOKEN).build()
 
     help_handler = CommandHandler('help', help)
-
     application.add_handler(help_handler)
-
     application.add_handler(MessageHandler(filters.AUDIO | filters.VOICE, download_audio))
-
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_audio))
-
-    application.add_handler(CallbackQueryHandler(button_selection_handler, pattern='^button_'))
+    application.add_handler(CallbackQueryHandler(button_selection_handler, pattern='^step_'))
 
     application.run_polling()
 
