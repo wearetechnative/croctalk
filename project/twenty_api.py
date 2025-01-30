@@ -1,16 +1,17 @@
 import os
 import glob
 import requests
-from telegram import Update
-import telegram_voice
 import http.client
-from telegram_voice import *
+import main
+from main import current_time
 import json
 from dotenv import load_dotenv
+from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, Application, ContextTypes, CallbackContext
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 SITE = os.getenv('SITE')
+SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
 
 headers = {
     'Content-Type': "application/json",
@@ -19,7 +20,7 @@ headers = {
     }
 
 async def get_files():
-    list_of_files = glob.glob('txt/*') # * means all if need specific format then *.csv
+    list_of_files = glob.glob(SAVE_DIR_TXT+"/*")
     latest_file = max(list_of_files, key=os.path.getctime)
     with open(latest_file, 'r') as latest_input:
         content = latest_input.read()
@@ -44,86 +45,90 @@ async def body_content():
     body_json = json.dumps(body)
     return body_json
 
-async def note():
+async def connection(context: CallbackContext):
+
+    payload_json = json.dumps(context.user_data["payload"])
+    conn = http.client.HTTPConnection(SITE)
+    conn.request("POST", "/rest/"+context.user_data["rest"], payload_json, headers)
+    res = conn.getresponse()
+    data = res.read()
+    response_data = data.decode("utf-8")
+    response_json = json.loads(response_data)
+
+    if context.user_data["rest"] == "notes":
+        id_twenty = response_json["data"]["createNote"]["id"]
+        return id_twenty
+    elif context.user_data["rest"] == "tasks":
+        id_twenty = response_json["data"]["createTask"]["id"]
+        return id_twenty
+    elif context.user_data["rest"] == "opportunities":
+        id_twenty = response_json["data"]["createOpportunity"]["id"]
+        return id_twenty
+
+async def note(context: CallbackContext):
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram - {telegram_voice.current_time}",
+        "title": f"Telegram - {main.current_time}",
         "body": body,
         "createdBy": {
             "source": "SYSTEM"
         }
     }
-    payload_json = json.dumps(payload)
-    conn = http.client.HTTPConnection(SITE)
-    conn.request("POST", "/rest/notes", payload_json, headers)
-    res = conn.getresponse()
-    data = res.read()
-    response_data = data.decode("utf-8")
-    response_json = json.loads(response_data)  # Parse JSON
-    note_id = response_json["data"]["createNote"]["id"]
-    #print(f"Note created with ID: {note_id}")
-
+    context.user_data["payload"] = payload
+    context.user_data["rest"] = "notes"
+    note_id = await connection(context)
     return note_id
 
-async def task():
+async def task(context: CallbackContext):
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram - {telegram_voice.current_time}",
+        "title": f"Telegram - {main.current_time}",
         "body": body,
         "status": "TODO",
         "createdBy": {
             "source": "SYSTEM"
         }
     }
-    payload_json = json.dumps(payload)
-    conn = http.client.HTTPConnection(SITE)
-    conn.request("POST", "/rest/tasks", payload_json, headers)
-    res = conn.getresponse()
-    data = res.read()
-    response_data = data.decode("utf-8")
-    response_json = json.loads(response_data)  # Parse JSON
-    task_id = response_json["data"]["createTask"]["id"]
-    #print(f"Task created with ID: {task_id}")
-
+    context.user_data["payload"] = payload
+    context.user_data["rest"] = "tasks"
+    task_id = await connection(context)
     return task_id
 
 
-async def opportunity():
+async def opportunity(context: CallbackContext):
     payload = {
         "position": 0,
-        "name": f"Telegram - {telegram_voice.current_time}",
+        "name": f"Telegram - {main.current_time}",
         "stage": "NEW",
         "createdBy": {
             "source": "SYSTEM"
         }
     }
-    payload_json = json.dumps(payload)
-    conn = http.client.HTTPConnection(SITE)
-    conn.request("POST", "/rest/opportunities", payload_json, headers)
-    res = conn.getresponse()
-    data = res.read()
-    response_data = data.decode("utf-8")
-    response_json = json.loads(response_data)  # Parse JSON
-    opportunity_id = response_json["data"]["createOpportunity"]["id"]
-
+    context.user_data["payload"] = payload
+    context.user_data["rest"] = "opportunities"
+    opportunity_id = await connection(context)
     return opportunity_id
 
-async def note_target():
-    opportunity_id = await opportunity()
-    note_id = await note()    
-
-    payload_data = {
+async def note_target(context: CallbackContext):
+    opportunity_id = await opportunity(context)
+    note_id = await note(context)    
+    payload = {
     "noteId": note_id,
     "opportunityId": opportunity_id,
     }
+    context.user_data["payload"] = payload
+    context.user_data["rest"] = "noteTargets"
+    await connection(context)
 
-    # Convert the dictionary to a JSON-formatted string
-    payload = json.dumps(payload_data)
-    conn = http.client.HTTPConnection(SITE)
-    conn.request("POST", "/rest/noteTargets", payload, headers)
-    res = conn.getresponse()
-    data = res.read()
-    print(data.decode("utf-8"))
-
+async def task_target(context: CallbackContext):
+    opportunity_id = await opportunity(context)
+    task_id = await task(context)    
+    payload = {
+    "noteId": task_id,
+    "opportunityId": opportunity_id,
+    }
+    context.user_data["payload"] = payload
+    context.user_data["rest"] = "taskTargets"
+    await connection(context)

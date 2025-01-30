@@ -6,17 +6,17 @@ import whisper
 from whisper.utils import get_writer
 from datetime import datetime
 import requests
-import twenty_query
+import twenty_api
 from dotenv import load_dotenv
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN') 
+SAVE_DIR_VOICE = os.getenv('SAVE_DIR_VOICE')
+SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
 
-SAVE_DIR_VOICE = "/tmp/voice/"
-SAVE_DIR_TXT = "/tmp/txt/"
 
 # Whisper
-model_whisper = whisper.load_model('small')
+model_whisper = whisper.load_model('large')
 def get_transcribe(audio: str, language: str = 'nl'):
     return model_whisper.transcribe(audio=audio, language=language, verbose=False)
 
@@ -96,9 +96,10 @@ async def show_option_buttons(update: Update, context: CallbackContext) -> None:
         
     keyboard = [
         [InlineKeyboardButton("Cancel", callback_data="step_0-button_1")],
-        [InlineKeyboardButton("New Note", callback_data="step_1-button_1")],
-        [InlineKeyboardButton("New Task", callback_data="step_1-button_2")],
-        [InlineKeyboardButton("New Opportunity", callback_data="step_1-button_3")],
+        [InlineKeyboardButton("Note", callback_data="step_1-button_1")],
+        [InlineKeyboardButton("Task", callback_data="step_1-button_2")],
+        [InlineKeyboardButton("Opportunity with Note", callback_data="step_1-button_3")],
+        [InlineKeyboardButton("Opportunity with Task", callback_data="step_1-button_4")],
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -111,8 +112,8 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
     await query.answer()
 
     data_dict = query.data.split("-") 
-    step = data_dict[0].split("_")[1]  # Extract step number
-    button = data_dict[1].split("_")[1]  # Extract button number
+    step = data_dict[0].split("_")[1]
+    button = data_dict[1].split("_")[1]
 
     if step == "0":
         if button == "1":
@@ -122,8 +123,8 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
 
         
     elif step == "1":
-        if button in ["1", "2", "3"]:
-            action_map = {"1": "note", "2": "task", "3": "opportunity"}
+        if button in ["1", "2", "3", "4"]:
+            action_map = {"1": "note", "2": "task", "3": "opportunity-note", "4": "opportunity-task"}
             context.user_data["create_type"] = action_map[button]
             await options(update, context)
             await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
@@ -134,17 +135,19 @@ async def options(update: Update, context: CallbackContext):
     print(create_type)
 
     if create_type == "note":
-        await twenty_query.note()
+        await twenty_api.note(context)
         delete_txt_files()
 
     if create_type == "task":
-        await twenty_query.task()
+        await twenty_api.task(context)
         delete_txt_files()
 
-    if create_type == "opportunity":
-        #await twenty_query.opportunity()
-        #await twenty_query.note()
-        await twenty_query.note_target()
+    if create_type == "opportunity-note":
+        await twenty_api.note_target(context)
+        delete_txt_files()
+
+    if create_type == "opportunity-task":
+        await twenty_api.task_target(context)
         delete_txt_files()
 
 # python-telegram-bot
