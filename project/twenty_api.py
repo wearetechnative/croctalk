@@ -48,12 +48,13 @@ async def body_content():
 async def connection(context: CallbackContext):
 
     payload_json = json.dumps(context.user_data["payload"])
-    conn = http.client.HTTPConnection(SITE)
+    conn = http.client.HTTPSConnection(SITE)
     conn.request("POST", "/rest/"+context.user_data["rest"], payload_json, headers)
     res = conn.getresponse()
     data = res.read()
     response_data = data.decode("utf-8")
     response_json = json.loads(response_data)
+    print(response_json)
 
     if context.user_data["rest"] == "notes":
         id_twenty = response_json["data"]["createNote"]["id"]
@@ -72,7 +73,7 @@ async def note(context: CallbackContext):
         "title": f"Telegram - {main.current_time}",
         "body": body,
         "createdBy": {
-            "source": "SYSTEM"
+            "source": "API"
         }
     }
     context.user_data["payload"] = payload
@@ -88,7 +89,7 @@ async def task(context: CallbackContext):
         "body": body,
         "status": "TODO",
         "createdBy": {
-            "source": "SYSTEM"
+            "source": "API"
         }
     }
     context.user_data["payload"] = payload
@@ -103,7 +104,7 @@ async def opportunity(context: CallbackContext):
         "name": f"Telegram - {main.current_time}",
         "stage": "NEW",
         "createdBy": {
-            "source": "SYSTEM"
+            "source": "API"
         }
     }
     context.user_data["payload"] = payload
@@ -126,7 +127,7 @@ async def task_target(context: CallbackContext):
     opportunity_id = await opportunity(context)
     task_id = await task(context)    
     payload = {
-    "noteId": task_id,
+    "taskId": task_id,
     "opportunityId": opportunity_id,
     }
     context.user_data["payload"] = payload

@@ -16,7 +16,7 @@ SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
 
 
 # Whisper
-model_whisper = whisper.load_model('large')
+model_whisper = whisper.load_model('small')
 def get_transcribe(audio: str, language: str = 'nl'):
     return model_whisper.transcribe(audio=audio, language=language, verbose=False)
 
@@ -129,6 +129,8 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
             await options(update, context)
             await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
             return 
+    else:
+        return
 
 async def options(update: Update, context: CallbackContext):  
     create_type = context.user_data["create_type"]
@@ -138,17 +140,19 @@ async def options(update: Update, context: CallbackContext):
         await twenty_api.note(context)
         delete_txt_files()
 
-    if create_type == "task":
+    elif create_type == "task":
         await twenty_api.task(context)
         delete_txt_files()
 
-    if create_type == "opportunity-note":
+    elif create_type == "opportunity-note":
         await twenty_api.note_target(context)
         delete_txt_files()
 
-    if create_type == "opportunity-task":
+    elif create_type == "opportunity-task":
         await twenty_api.task_target(context)
         delete_txt_files()
+    else:
+        return
 
 # python-telegram-bot
 def main() -> None:
