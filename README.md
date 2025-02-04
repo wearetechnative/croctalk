@@ -1,7 +1,17 @@
 # CrocTalk
 
-<!-- SHIELDS -->
+Talk your way into Twenty. 
 
 [![](croctalk.svg)]()
 
-Talk your way into Twenty. 
+<!-- PROJECT SHIELDS -->
+
+## Description
+
+...
+
+
+
+## Getting Started
+...
+

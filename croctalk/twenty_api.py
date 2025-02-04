@@ -2,13 +2,19 @@ import os
 import glob
 import requests
 import http.client
-import main
-from main import current_time
 import json
 from dotenv import load_dotenv
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, Application, ContextTypes, CallbackContext
+from datetime import datetime
 
-load_dotenv()
+
+current_dir = os.getcwd()
+dotenv_path = os.path.join(current_dir, '.env')
+load_dotenv(dotenv_path=dotenv_path)
+
+# THE TIME
+current_time = datetime.now().strftime('%Y-%d-%m')
+
 TOKEN = os.getenv('TOKEN')
 SITE = os.getenv('SITE')
 SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
@@ -70,7 +76,7 @@ async def note(context: CallbackContext):
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram - {main.current_time}",
+        "title": f"Telegram - {current_time}",
         "body": body,
         "createdBy": {
             "source": "API"
@@ -85,7 +91,7 @@ async def task(context: CallbackContext):
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram - {main.current_time}",
+        "title": f"Telegram - {current_time}",
         "body": body,
         "status": "TODO",
         "createdBy": {
@@ -101,7 +107,7 @@ async def task(context: CallbackContext):
 async def opportunity(context: CallbackContext):
     payload = {
         "position": 0,
-        "name": f"Telegram - {main.current_time}",
+        "name": f"Telegram - {current_time}",
         "stage": "NEW",
         "createdBy": {
             "source": "API"

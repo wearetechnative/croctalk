@@ -6,10 +6,13 @@ import whisper
 from whisper.utils import get_writer
 from datetime import datetime
 import requests
-import twenty_api
+from . import twenty_api
 from dotenv import load_dotenv
 
-load_dotenv()
+current_dir = os.getcwd()
+dotenv_path = os.path.join(current_dir, '.env')
+load_dotenv(dotenv_path=dotenv_path)
+
 BOT_TOKEN = os.getenv('BOT_TOKEN') 
 SAVE_DIR_VOICE = os.getenv('SAVE_DIR_VOICE')
 SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
@@ -82,8 +85,10 @@ async def download_audio(update: Update, context: CallbackContext):
             result = get_transcribe(audio=file_path)
             writer = get_writer("txt", SAVE_DIR_TXT)
             test = writer(result, f"{current_time}.txt")
-        except: 
-            await update.message.reply_text("Failed")
+            
+        except Exception as e:
+            print(f"Failed to transcribe: {str(e)}")  # Print the actual error
+            await update.message.reply_text(f"Failed: {str(e)}")
 
         await show_option_buttons(update, context)
 
