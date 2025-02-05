@@ -2,16 +2,19 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, CallbackQueryHandler, Application, ContextTypes, CallbackContext
 import os
+import sys
 import whisper
 from whisper.utils import get_writer
 from datetime import datetime
 import requests
-from . import twenty_api
+from twenty_api import twenty_api
 from dotenv import load_dotenv
 
 current_dir = os.getcwd()
 dotenv_path = os.path.join(current_dir, '.env')
 load_dotenv(dotenv_path=dotenv_path)
+
+sys.path.append(current_dir + '/twenty_api/twenty_api')
 
 BOT_TOKEN = os.getenv('BOT_TOKEN') 
 SAVE_DIR_VOICE = os.getenv('SAVE_DIR_VOICE')
@@ -131,6 +134,7 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
         if button in ["1", "2", "3", "4"]:
             action_map = {"1": "note", "2": "task", "3": "opportunity-note", "4": "opportunity-task"}
             context.user_data["create_type"] = action_map[button]
+            await query.edit_message_text(text=f"The {context.user_data['create_type']} is being made in twenty.")
             await options(update, context)
             await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
             return 
