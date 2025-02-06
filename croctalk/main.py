@@ -7,7 +7,7 @@ import whisper
 from whisper.utils import get_writer
 from datetime import datetime
 import requests
-from twenty_api import twenty_api
+from . import twenty_api
 from dotenv import load_dotenv
 
 current_dir = os.getcwd()
