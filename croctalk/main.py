@@ -7,7 +7,7 @@ import whisper
 from whisper.utils import get_writer
 from datetime import datetime
 import requests
-from . import twenty_api
+from croctalk.twenty_api import twenty_api
 from dotenv import load_dotenv
 
 current_dir = os.getcwd()
@@ -19,10 +19,11 @@ sys.path.append(current_dir + '/twenty_api/twenty_api')
 BOT_TOKEN = os.getenv('BOT_TOKEN') 
 SAVE_DIR_VOICE = os.getenv('SAVE_DIR_VOICE')
 SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
+WHISPER_MODEL = os.getenv('WHISPER_MODEL')
 
 
 # Whisper
-model_whisper = whisper.load_model('small')
+model_whisper = whisper.load_model(WHISPER_MODEL)
 def get_transcribe(audio: str, language: str = 'nl'):
     return model_whisper.transcribe(audio=audio, language=language, verbose=False)
 

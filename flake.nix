@@ -1,5 +1,5 @@
 {
-  description = "My Python Package";
+  description = "Croctalk";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
