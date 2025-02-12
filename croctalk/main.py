@@ -82,17 +82,9 @@ async def download_audio(update: Update, context: CallbackContext):
         global file_path
         file_path = os.path.join(SAVE_DIR_VOICE, f"{current_time}.ogg")
         await file.download_to_drive(custom_path=file_path)
-        await update.message.reply_text("Processing...")
+        #await update.message.reply_text("Processing...")
 
         # Whisper 
-        try:
-            result = get_transcribe(audio=file_path)
-            writer = get_writer("txt", SAVE_DIR_TXT)
-            test = writer(result, f"{current_time}.txt")
-            
-        except Exception as e:
-            print(f"Failed to transcribe: {str(e)}")  # Print the actual error
-            await update.message.reply_text(f"Failed: {str(e)}")
 
         await show_option_buttons(update, context)
 
@@ -135,7 +127,18 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
         if button in ["1", "2", "3", "4"]:
             action_map = {"1": "note", "2": "task", "3": "opportunity-note", "4": "opportunity-task"}
             context.user_data["create_type"] = action_map[button]
-            await query.edit_message_text(text=f"The {context.user_data['create_type']} is being made in twenty.")
+            await query.edit_message_text(text=f"The {context.user_data['create_type']} is being proccessed by croctalk, this can take up to a few minutes.")
+
+            try:
+                result = get_transcribe(audio=file_path)
+                writer = get_writer("txt", SAVE_DIR_TXT)
+                test = writer(result, f"{current_time}.txt")
+                
+            except Exception as e:
+                print(f"Failed to transcribe: {str(e)}")  # Print the actual error
+                await update.message.reply_text(f"Failed: {str(e)}")
+                await options(update, context)
+
             await options(update, context)
             await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
             return 
