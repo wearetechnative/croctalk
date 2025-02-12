@@ -19,7 +19,6 @@
         propagatedBuildInputs = with pkgs.python3Packages; [ 
           torch-bin
           torchaudio-bin
-          torch-audiomentations
           librosa
           jiwer
           datasets
