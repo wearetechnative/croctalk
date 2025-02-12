@@ -24,7 +24,7 @@
           datasets
           transformers
           evaluate
-          accelerate
+          #accelerate
           pip
           torchvision
           pycuda
