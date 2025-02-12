@@ -6,16 +6,29 @@
   outputs = { self, nixpkgs }: 
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+
     in {
-      # Build the Python package using buildPythonPackage
       packages.${system}.croctalk = pkgs.python3Packages.buildPythonPackage rec {
         pname = "croctalk";
         version = "0.1.0";
         src = ./.;  # Points to the current directory where the package code is
 
         # Add any dependencies your package needs
-        propagatedBuildInputs = with pkgs.python3Packages; [
+
+        propagatedBuildInputs = with pkgs.python3Packages; [ 
+          torch-bin
+          torchaudio-bin
+          torch-audiomentations
+          librosa
+          jiwer
+          datasets
+          transformers
+          evaluate
+          accelerate
+          pip
+          torchvision
+          pycuda
           langchain
           langchain-community
           openai
@@ -37,6 +50,6 @@
         type = "app";
         program = "${self.packages.${system}.croctalk}/bin/croctalk";  # This is where the executable is
       };
-    };
+    }; 
 }
 
