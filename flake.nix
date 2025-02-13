@@ -19,15 +19,6 @@
         propagatedBuildInputs = with pkgs.python3Packages; [ 
           torch-bin
           torchaudio-bin
-          librosa
-          jiwer
-          datasets
-          transformers
-          evaluate
-          #accelerate
-          pip
-          torchvision
-          pycuda
           langchain
           langchain-community
           openai
