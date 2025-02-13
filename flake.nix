@@ -21,8 +21,7 @@
           torchaudio-bin
           langchain
           langchain-community
-          openai
-          openai-whisper
+          #openai-whisper
           pydub
           python-dotenv
           requests
