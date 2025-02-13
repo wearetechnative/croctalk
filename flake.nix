@@ -12,32 +12,29 @@
       packages.${system}.croctalk = pkgs.python3Packages.buildPythonPackage rec {
         pname = "croctalk";
         version = "0.1.0";
-        src = ./.;  # Points to the current directory where the package code is
+        src = ./.;
 
-        # Add any dependencies your package needs
-
-        propagatedBuildInputs = with pkgs.python3Packages; [ 
-          torch-bin
-          torchaudio-bin
-          langchain
-          langchain-community
+        propagatedBuildInputs = [ 
+          pkgs.openai-whisper
+          pkgs.python3Packages.torch-bin
+          pkgs.python3Packages.torchaudio-bin
+          pkgs.python3Packages.langchain
+          pkgs.python3Packages.langchain-community
           #openai-whisper
-          pydub
-          python-dotenv
-          requests
-          tiktoken
-          telegram-text
-          python-telegram-bot
+          pkgs.python3Packages.pydub
+          pkgs.python3Packages.python-dotenv
+          pkgs.python3Packages.requests
+          pkgs.python3Packages.tiktoken
+          pkgs.python3Packages.telegram-text
+          pkgs.python3Packages.python-telegram-bot
         ];
       };
       
-      # Expose the default package
       defaultPackage.${system} = self.packages.${system}.croctalk;
 
-      # Create an app for the command-line interface
       apps.${system}.croctalk = {
         type = "app";
-        program = "${self.packages.${system}.croctalk}/bin/croctalk";  # This is where the executable is
+        program = "${self.packages.${system}.croctalk}/bin/croctalk";
       };
     }; 
 }
