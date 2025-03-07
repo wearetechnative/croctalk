@@ -8,25 +8,23 @@
       system = "x86_64-linux";
 
       
-      openai-whisper  = final: prev: {
-
+      openai-overlay  = final: prev: {
         openai-whisper = prev.openai-whisper.override {
           torch = [
             prev.torch-bin
           ];
         };
       };
-      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; overlay = [ openai-whisper ]; };
+      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; overlay = [ openai-overlay ]; };
 
     in {
       packages.${system}.croctalk = pkgs.python3Packages.buildPythonPackage rec {
         pname = "croctalk";
         version = "0.1.0";
-        src = ./.;  # Points to the current directory where the package code is
-
-        # Add any dependencies your package needs
+        src = ./.;
 
         propagatedBuildInputs = with pkgs.python3Packages; [ 
+          torch-bin
           langchain
           langchain-community
           openai-whisper
