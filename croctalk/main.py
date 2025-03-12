@@ -8,7 +8,7 @@ from whisper.utils import get_writer
 from datetime import datetime
 import requests
 from croctalk.twenty_api import twenty_api
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 current_dir = os.getcwd()
 dotenv_path = os.path.join(current_dir, '.env')
@@ -36,7 +36,6 @@ logger = logging.getLogger(__name__)
 # Curent time in readable format
 current = datetime.now()
 current_time = current.strftime('%Y-%d-%m')
-
 
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -77,15 +76,10 @@ async def download_audio(update: Update, context: CallbackContext):
         await update.message.reply_text("To use this, please send a voice message. For more information type '/help'.")
 
     if audio:
-        # telegram-bot
         file = await audio.get_file()
         global file_path
         file_path = os.path.join(SAVE_DIR_VOICE, f"{current_time}.ogg")
         await file.download_to_drive(custom_path=file_path)
-        #await update.message.reply_text("Processing...")
-
-        # Whisper 
-
         await show_option_buttons(update, context)
 
 
@@ -135,37 +129,48 @@ async def button_selection_handler(update: Update, context: CallbackContext) -> 
                 test = writer(result, f"{current_time}.txt")
                 
             except Exception as e:
-                print(f"Failed to transcribe: {str(e)}")  # Print the actual error
+                print(f"Failed to transcribe: {str(e)}")
                 await update.message.reply_text(f"Failed: {str(e)}")
-                await options(update, context)
+                exit
 
             await options(update, context)
-            await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
-            return 
+
     else:
         return
 
 async def options(update: Update, context: CallbackContext):  
+    query = update.callback_query
     create_type = context.user_data["create_type"]
     print(create_type)
 
-    if create_type == "note":
-        await twenty_api.note(context)
-        delete_txt_files()
+    try:
+        if create_type == "note":
+            await twenty_api.note(context)
+            delete_txt_files()
 
-    elif create_type == "task":
-        await twenty_api.task(context)
-        delete_txt_files()
+        elif create_type == "task":
+            await twenty_api.task(context)
+            delete_txt_files()
 
-    elif create_type == "opportunity-note":
-        await twenty_api.note_target(context)
-        delete_txt_files()
+        elif create_type == "opportunity-note":
+            await twenty_api.note_target(context)
+            delete_txt_files()
 
-    elif create_type == "opportunity-task":
-        await twenty_api.task_target(context)
+        elif create_type == "opportunity-task":
+            await twenty_api.task_target(context)
+            delete_txt_files()
+        else:
+            print("create_type not found")
+            return
+
+        await query.edit_message_text(text=f"The {context.user_data['create_type']} is made in twenty.")
+
+    except Exception as e:
+        print("Failed to process, contact administrator.")  # Print the actual error
         delete_txt_files()
-    else:
+        await query.edit_message_text(text=f"The {context.user_data['create_type']} failed, please contact your administrator.")
         return
+
 
 # python-telegram-bot
 def main() -> None:

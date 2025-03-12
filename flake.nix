@@ -3,48 +3,41 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  outputs = { self, nixpkgs }: 
-    let
-      system = "x86_64-linux";
-
-      
-      openai-overlay  = final: prev: {
-        openai-whisper = prev.openai-whisper.override {
-          torch = [
-            prev.torch-bin
-          ];
-        };
-      };
-      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; overlay = [ openai-overlay ]; };
-
-    in {
-      packages.${system}.croctalk = pkgs.python3Packages.buildPythonPackage rec {
-        pname = "croctalk";
-        version = "0.1.0";
-        src = ./.;
-
-        propagatedBuildInputs = with pkgs.python3Packages; [ 
-          torch-bin
-          langchain
-          langchain-community
-          openai-whisper
-          pydub
-          python-dotenv
-          requests
-          tiktoken
-          telegram-text
-          python-telegram-bot
+  outputs = { self, nixpkgs, }: 
+  let
+    openai-overlay  = final: prev: {
+      openai-whisper = prev.python312Packages.openai-whisper.override {
+        torch = [
+          prev.torch-bin
         ];
       };
-      
-      # Expose the default package
-      defaultPackage.${system} = self.packages.${system}.croctalk;
+    };
+    supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
+    forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+    nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; config.allowUnfree = true; config.cudaSupport= true; overlays = [  ];  });
+  in {    
+    packages = forAllSystems (system:
+    let
+      pkgs = nixpkgsFor.${system};
+    in
+    {
+      croctalk = pkgs.callPackage ./package.nix { };
+    });
 
-      # Create an app for the command-line interface
-      apps.${system}.croctalk = {
-        type = "app";
-        program = "${self.packages.${system}.croctalk}/bin/croctalk";  # This is where the executable is
+    defaultPackage = forAllSystems (system: self.packages.${system}.croctalk);
+
+
+    devShells = forAllSystems (system:
+    let
+      pkgs = nixpkgsFor.${system};
+    in
+    {
+      default = pkgs.mkShell {
+        buildInputs = with pkgs; [
+          self.packages.${system}.croctalk
+        ];
       };
-    }; 
+    });
+  };
 }
 
