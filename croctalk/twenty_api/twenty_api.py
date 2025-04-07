@@ -94,7 +94,7 @@ async def task(context: CallbackContext):
     body = await body_content()
     payload = {
         "position": 0,
-        "title": f"Telegram - {current_time}",
+        "title": f"Telegram - {current_time()}",
         "body": body,
         "status": "TODO",
         "createdBy": {
