@@ -38,21 +38,8 @@ async def get_files():
 
 async def body_content():
     content = await get_files()
-    body = [
-        {
-            "id": "595b40d5-3095-4667-b8e3-73ab407a52a7",
-            "type": "paragraph",
-            "props": {
-                "textColor": "default",
-                "backgroundColor": "default",
-                "textAlignment": "left"
-            },
-            "content": [{"type": "text", "text": str(content), "styles": {}}],
-            "children": []
-        }
-    ]
-    body_json = json.dumps(body)
-    return body_json
+    body = str(content)
+    return body
 
 async def connection(context: CallbackContext):
 
@@ -80,7 +67,10 @@ async def note(context: CallbackContext):
     payload = {
         "position": 0,
         "title": f"Telegram - {current_time()}",
-        "body": body,
+        "bodyV2": {
+           "blocknote": "",
+           "markdown": body
+        },
         "createdBy": {
             "source": "API"
         }
@@ -95,7 +85,10 @@ async def task(context: CallbackContext):
     payload = {
         "position": 0,
         "title": f"Telegram - {current_time()}",
-        "body": body,
+        "bodyV2": {
+           "blocknote": "",
+           "markdown": body
+        },
         "status": "TODO",
         "createdBy": {
             "source": "API"
