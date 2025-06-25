@@ -3,28 +3,29 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  outputs = { self, nixpkgs, }: 
+  outputs = { self, nixpkgs, }:
   let
-    openai-overlay  = final: prev: {
-      openai-whisper = prev.python312Packages.openai-whisper.override {
-        torch = [
-          prev.torch-bin
-        ];
-      };
-    };
     supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-    nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; config.allowUnfree = true; config.cudaSupport= true; overlays = [  ];  });
-  in {    
+    nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; config.allowUnfree = true;  overlays = [  ];  });
+  in {
+    nixosModules = forAllSystems (system:
+    let
+      pkgs = nixpkgsFor.${system};
+    in
+    {
+      croctalk =  import ./module;
+    });
+
     packages = forAllSystems (system:
     let
       pkgs = nixpkgsFor.${system};
     in
     {
-      croctalk = pkgs.callPackage ./package.nix { };
+      croctalk = pkgs.callPackage ./package { };
     });
 
-    defaultPackage = forAllSystems (system: self.packages.${system}.croctalk);
+    croctalk = forAllSystems (system: self.packages.${system}.croctalk);
 
 
     devShells = forAllSystems (system:
@@ -32,12 +33,20 @@
       pkgs = nixpkgsFor.${system};
     in
     {
-      default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          self.packages.${system}.croctalk
-        ];
-      };
-    });
-  };
-}
+      default =
+        let
+          python = pkgs.python312.override { };
+        in
+        pkgs.mkShell {
+          packages = [
+            (python.withPackages (ps: with ps; [
+              python-telegram-bot
+              openai-whisper
+              python-dotenv
+            ]))
+          ];
+        };
+      });
+    };
+  }
 

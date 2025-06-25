@@ -20,7 +20,7 @@ def current_time():
 # Variables
 TOKEN = os.getenv('TOKEN')
 SITE = os.getenv('SITE')
-SAVE_DIR_TXT = os.getenv('SAVE_DIR_TXT')
+SAVE_DIR_TMP = os.getenv('SAVE_DIR_TMP')
 
 headers = {
     'Content-Type': "application/json",
@@ -29,7 +29,7 @@ headers = {
     }
 
 async def get_files():
-    list_of_files = glob.glob(SAVE_DIR_TXT+"/*")
+    list_of_files = glob.glob(SAVE_DIR_TMP+"/*")
     latest_file = max(list_of_files, key=os.path.getctime)
     with open(latest_file, 'r') as latest_input:
         content = latest_input.read()
@@ -50,17 +50,19 @@ async def connection(context: CallbackContext):
     data = res.read()
     response_data = data.decode("utf-8")
     response_json = json.loads(response_data)
-    print(response_json)
 
-    if context.user_data["rest"] == "notes":
-        id_twenty = response_json["data"]["createNote"]["id"]
-        return id_twenty
-    elif context.user_data["rest"] == "tasks":
-        id_twenty = response_json["data"]["createTask"]["id"]
-        return id_twenty
-    elif context.user_data["rest"] == "opportunities":
-        id_twenty = response_json["data"]["createOpportunity"]["id"]
-        return id_twenty
+    if "messages" not in response_json != "Metadata cache version not found":
+        if context.user_data["rest"] == "notes":
+            id_twenty = response_json["data"]["createNote"]["id"]
+            return id_twenty
+        elif context.user_data["rest"] == "tasks":
+            id_twenty = response_json["data"]["createTask"]["id"]
+            return id_twenty
+        elif context.user_data["rest"] == "opportunities":
+            id_twenty = response_json["data"]["createOpportunity"]["id"]
+            return id_twenty
+    else:
+        await connection(context)
 
 async def note(context: CallbackContext):
     body = await body_content()
@@ -116,7 +118,7 @@ async def opportunity(context: CallbackContext):
 
 async def note_target(context: CallbackContext):
     opportunity_id = await opportunity(context)
-    note_id = await note(context)    
+    note_id = await note(context)
     payload = {
     "noteId": note_id,
     "opportunityId": opportunity_id,
@@ -127,7 +129,7 @@ async def note_target(context: CallbackContext):
 
 async def task_target(context: CallbackContext):
     opportunity_id = await opportunity(context)
-    task_id = await task(context)    
+    task_id = await task(context)
     payload = {
     "taskId": task_id,
     "opportunityId": opportunity_id,
